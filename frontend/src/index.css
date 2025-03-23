@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+
+* {
+    font-family: Outfit;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+.active hr {
+    display: block;
+}
+
+@media (max-width: 740px) {
+    .active p {
+        color: white;
+        background-color: var(--tw-bg-opacity, #28e3da); /* Adjust color as needed */
+    }
+}
