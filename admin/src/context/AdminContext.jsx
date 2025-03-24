@@ -88,7 +88,7 @@ const AdminContextProvider = (props) => {
             const { data } = await axios.post(backendUrl + '/api/admin/cancel-appointment', { appointmentId }, { headers: { 
                 'Authorization': `Bearer ${aToken}`,
                 'Content-Type': 'multipart/form-data',  
-            } })
+            }  })
 
             if (data.success) {
                 toast.success(data.message)
@@ -108,10 +108,10 @@ const AdminContextProvider = (props) => {
     const getDashData = async () => {
         try {
 
-            const { data } = await axios.get(backendUrl + '/api/admin/dashboard', { headers: { 
+            const { data } = await axios.get(backendUrl + '/api/admin/dashboard', {headers: { 
                 'Authorization': `Bearer ${aToken}`,
                 'Content-Type': 'multipart/form-data',  
-            } })
+            } } )
 
             if (data.success) {
                 setDashData(data.dashData)

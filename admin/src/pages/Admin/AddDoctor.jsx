@@ -77,7 +77,7 @@ const AddDoctor = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
+        <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
             <form onSubmit={onSubmitHandler} className="w-full max-w-5xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h2 className="text-2xl font-bold text-cyan-800">Add New Doctor</h2>
