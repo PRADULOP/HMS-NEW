@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from 'react'
 import { assets } from '../../assets/assets'
 import { AdminContext } from '../../context/AdminContext'
 import { AppContext } from '../../context/AppContext'
+import { Link, NavLink } from 'react-router-dom'
 
 const Dashboard = () => {
   const { aToken, getDashData, cancelAppointment, dashData } = useContext(AdminContext)
@@ -121,12 +122,14 @@ const Dashboard = () => {
 
           {dashData.latestAppointments.length > 5 && (
             <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-right">
-              <button className="text-cyan-600 hover:text-cyan-800 text-sm font-medium">
+             <Link to='/all-appointments'> <button className="text-cyan-600 hover:text-cyan-800 text-sm font-medium">
                 View All Appointments →
-              </button>
+              </button></Link>
             </div>
           )}
         </div>
+        
+        
       </div>
     </div>
   )

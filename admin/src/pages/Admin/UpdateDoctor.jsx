@@ -1,12 +1,15 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { assets } from '../../assets/assets'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { AdminContext } from '../../context/AdminContext'
 import { AppContext } from '../../context/AppContext'
 
-const AddDoctor = () => {
-    const [docImg, setDocImg] = useState(false)
+const UpdateDoctor = () => {
+    const { id } = useParams()
+    const navigate = useNavigate()
+    const [docImg, setDocImg] = useState(null)
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -17,25 +20,62 @@ const AddDoctor = () => {
     const [degree, setDegree] = useState('')
     const [address1, setAddress1] = useState('')
     const [address2, setAddress2] = useState('')
+    const [existingImage, setExistingImage] = useState('')
 
     const { backendUrl } = useContext(AppContext)
     const { aToken } = useContext(AdminContext)
+
+    useEffect(() => {
+        const fetchDoctorDetails = async () => {
+            try {
+                const { data } = await axios.get(`${backendUrl}/apis/admin/doctor/${id}`, {
+                    headers: { 
+                        'Authorization': `Bearer ${aToken}`
+                    }
+                })
+                
+                if (data.success) {
+                    const doctor = data.doctor
+                    setName(doctor.name)
+                    setEmail(doctor.email)
+                    setExperience(doctor.experience)
+                    setFees(doctor.fees)
+                    setAbout(doctor.about)
+                    setSpeciality(doctor.speciality)
+                    setDegree(doctor.degree)
+                    setExistingImage(doctor.image)
+                    
+                    // Set address fields
+                    if (doctor.address) {
+                        setAddress1(doctor.address.line1 || '')
+                        setAddress2(doctor.address.line2 || '')
+                    }
+                }
+            } catch (error) {
+                toast.error(error.message)
+                console.log(error)
+            }
+        }
+
+        if (id) {
+            fetchDoctorDetails()
+        }
+    }, [id, backendUrl, aToken])
 
     const onSubmitHandler = async (event) => {
         event.preventDefault()
 
         try {
-            if (!docImg) {
-                return toast.error('Image Not Selected')
+            const formData = new FormData()
+
+            if (docImg) {
+                formData.append('image', docImg)
             }
-            console.log(docImg)
-
-            const formData = new FormData();
-
-            formData.append('image', docImg)
             formData.append('name', name)
             formData.append('email', email)
-            formData.append('password', password)
+            if (password) {
+                formData.append('password', password)
+            }
             formData.append('experience', experience)
             formData.append('fees', Number(fees))
             formData.append('about', about)
@@ -43,13 +83,7 @@ const AddDoctor = () => {
             formData.append('degree', degree)
             formData.append('address', JSON.stringify({ line1: address1, line2: address2 }))
 
-
-            // console log formdata            
-            formData.forEach((value, key) => {
-                console.log(`${key}: ${value}`);
-            });
-
-            const { data } = await axios.post(backendUrl+'/apis/admin/add-doctor', formData, { 
+            const { data } = await axios.put(`${backendUrl}/apis/admin/update-doctor/${id}`, formData, { 
                 headers: { 
                     'Authorization': `Bearer ${aToken}`,
                     'Content-Type': 'multipart/form-data',  
@@ -58,20 +92,12 @@ const AddDoctor = () => {
             
             if (data.success) {
                 toast.success(data.message)
-                setDocImg(false)
-                setName('')
-                setPassword('')
-                setEmail('')
-                setAddress1('')
-                setAddress2('')
-                setDegree('')
-                setAbout('')
-                setFees('')
+                navigate('/doctor-list')
             } else {
                 toast.error(data.message)
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(error.response?.data?.message || error.message)
             console.log(error)
         }
     }
@@ -80,7 +106,7 @@ const AddDoctor = () => {
         <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
             <form onSubmit={onSubmitHandler} className="w-full max-w-5xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold text-cyan-800">Add New Doctor</h2>
+                    <h2 className="text-2xl font-bold text-cyan-800">Update Doctor</h2>
                     <div className="h-1 flex-grow mx-4 bg-gradient-to-r from-cyan-600 to-blue-500 rounded-full"></div>
                 </div>
 
@@ -89,7 +115,7 @@ const AddDoctor = () => {
                     <div className="bg-gradient-to-r from-cyan-600 to-blue-500 p-6 flex items-center gap-6">
                         <div className="relative group">
                             <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-                                <span className="text-white text-xs font-medium">Upload Photo</span>
+                                <span className="text-white text-xs font-medium">Change Photo</span>
                             </div>
                             <label htmlFor="doc-img" className="cursor-pointer block">
                                 <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white flex items-center justify-center">
@@ -98,6 +124,12 @@ const AddDoctor = () => {
                                             className="w-full h-full object-cover" 
                                             src={URL.createObjectURL(docImg)} 
                                             alt="Doctor preview" 
+                                        />
+                                    ) : existingImage ? (
+                                        <img 
+                                            className="w-full h-full object-cover" 
+                                            src={existingImage} 
+                                            alt="Doctor" 
                                         />
                                     ) : (
                                         <img 
@@ -112,7 +144,7 @@ const AddDoctor = () => {
                         </div>
                         <div>
                             <h3 className="text-white text-lg font-semibold">Doctor Profile</h3>
-                            <p className="text-blue-100 text-sm">Upload a professional photo of the doctor</p>
+                            <p className="text-blue-100 text-sm">{docImg ? 'New photo selected' : 'Current photo displayed'}</p>
                         </div>
                     </div>
 
@@ -146,13 +178,12 @@ const AddDoctor = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                                    <label className="block text-sm font-medium text-gray-700">Password (Leave blank to keep current)</label>
                                     <input 
                                         type="password" 
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
-                                        placeholder="Set secure password" 
-                                        required
+                                        placeholder="Enter new password if changing" 
                                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition duration-200 outline-none"
                                     />
                                 </div>
@@ -253,12 +284,19 @@ const AddDoctor = () => {
                             ></textarea>
                         </div>
 
-                        <div className="mt-10 flex justify-end">
+                        <div className="mt-10 flex justify-end gap-4">
+                            <button 
+                                type="button"
+                                onClick={() => navigate('/doctor-list')}
+                                className="px-6 py-3 bg-gray-300 text-gray-800 font-medium rounded-lg shadow hover:shadow-md transition"
+                            >
+                                Cancel
+                            </button>
                             <button 
                                 type="submit" 
-                                className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 focus:ring-4 focus:ring-cyan-200"
+                                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 focus:ring-4 focus:ring-cyan-200"
                             >
-                                Register Doctor
+                                Update Doctor
                             </button>
                         </div>
                     </div>
@@ -268,5 +306,4 @@ const AddDoctor = () => {
     )
 }
 
-export default AddDoctor
-
+export default UpdateDoctor

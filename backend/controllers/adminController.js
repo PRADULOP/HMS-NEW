@@ -226,11 +226,149 @@ const adminDashboard = async (req, res) => {
     }
 }
 
+const getDoctorById = async (req, res) => {
+  console.log("inside getDoctorById function")
+  try {
+      const { id } = req.params; // Get doctor ID from request parameters
+
+      const doctor = await doctorModel.findById(id).select('-password'); // Find doctor by ID
+
+      if (!doctor) {
+          return res.status(404).json({ success: false, message: "Doctor not found" });
+      }
+
+      res.json({ success: true, doctor });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const updateDoctor = async (req, res) => {
+  console.log("inside updateDoctor function")
+  try {
+    console.log("Update Request Body:", req.body);
+    console.log("Uploaded File:", req.file);
+
+    const { id } = req.params;
+    const { name, email, speciality, degree, experience, about, fees, address } = req.body;
+    const imageFile = req.file;
+
+    // ✅ Find doctor by ID
+    let doctor = await doctorModel.findById(id);
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    // ✅ Validate email format if updated
+    if (email && !validator.isEmail(email)) {
+      return res.status(400).json({ success: false, message: "Invalid email address" });
+    }
+
+    // ✅ Parse address safely if updated
+    let parsedAddress = doctor.address;
+    if (address) {
+      try {
+        parsedAddress = JSON.parse(address);
+      } catch (error) {
+        return res.status(400).json({ success: false, message: "Address must be a valid JSON string" });
+      }
+    }
+
+    // ✅ Handle Image Upload if provided
+    let imageUrl = doctor.image;
+    if (imageFile) {
+      // Upload new image to Cloudinary
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+        folder: "doctor_images"
+      });
+
+      // ✅ Delete old image from Cloudinary
+      if (doctor.image) {
+        const oldImagePublicId = doctor.image.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(`doctor_images/${oldImagePublicId}`);
+      }
+
+      imageUrl = imageUpload.secure_url;
+
+      // ✅ Remove local file after upload
+      if (fs.existsSync(imageFile.path)) {
+        fs.unlinkSync(imageFile.path);
+      }
+    }
+
+    // ✅ Update doctor data
+    doctor.name = name || doctor.name;
+    doctor.email = email || doctor.email;
+    doctor.speciality = speciality || doctor.speciality;
+    doctor.degree = degree || doctor.degree;
+    doctor.experience = experience || doctor.experience;
+    doctor.about = about || doctor.about;
+    doctor.fees = fees || doctor.fees;
+    doctor.address = parsedAddress;
+    doctor.image = imageUrl;
+
+    await doctor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Doctor updated successfully",
+      doctor
+    });
+
+  } catch (error) {
+    console.error("Error updating doctor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message
+    });
+  }
+};
+
+const deleteDoctor = async (req, res) => {
+  console.log("inside deleteDoctor function")
+  try {
+    const { id } = req.params;
+
+    // ✅ Find doctor by ID
+    const doctor = await doctorModel.findById(id);
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found" });
+    }
+
+    // ✅ Delete doctor image from Cloudinary
+    if (doctor.image) {
+      const oldImagePublicId = doctor.image.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(`doctor_images/${oldImagePublicId}`);
+    }
+
+    // ✅ Delete doctor from database
+    await doctorModel.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Doctor deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Error deleting doctor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message
+    });
+  }
+};
+
 export {
     loginAdmin,
     appointmentsAdmin,
     appointmentCancel,
     addDoctor,
     allDoctors,
-    adminDashboard
+    getDoctorById,
+    adminDashboard,updateDoctor,deleteDoctor
 }

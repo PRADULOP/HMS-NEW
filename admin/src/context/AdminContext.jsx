@@ -2,148 +2,164 @@ import axios from "axios";
 import { createContext, useState } from "react";
 import { toast } from "react-toastify";
 
-
-export const AdminContext = createContext()
+export const AdminContext = createContext();
 
 const AdminContextProvider = (props) => {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    const [aToken, setAToken] = useState(localStorage.getItem('aToken') || '');
+    const [appointments, setAppointments] = useState([]);
+    const [doctors, setDoctors] = useState([]);
+    const [dashData, setDashData] = useState(false);
+    const [editingDoctor, setEditingDoctor] = useState(null);
 
-    const [aToken, setAToken] = useState(localStorage.getItem('aToken') ? localStorage.getItem('aToken') : '')
-
-    const [appointments, setAppointments] = useState([])
-    const [doctors, setDoctors] = useState([])
-    const [dashData, setDashData] = useState(false)
-
-    // Getting all Doctors data from Database using API
+    // Get All Doctors
     const getAllDoctors = async () => {
-
         try {
-
-            const { data } = await axios.get(backendUrl + '/api/admin/all-doctors', { headers: { 
-                'Authorization': `Bearer ${aToken}`,
-                'Content-Type': 'multipart/form-data',  
-            } })
+            const { data } = await axios.get(`${backendUrl}/apis/admin/all-doctors`, {
+                headers: {
+                    'Authorization': `Bearer ${aToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             if (data.success) {
-                setDoctors(data.doctors)
+                setDoctors(data.doctors);
             } else {
-                toast.error(data.message)
+                toast.error(data.message);
             }
-
         } catch (error) {
-            toast.error(error.message)
+            toast.error(error.message);
         }
+    };
 
-    }
-
-    // Function to change doctor availablity using API
+    // Change Doctor Availability
     const changeAvailability = async (docId) => {
         try {
-
-            const { data } = await axios.post(backendUrl + '/api/admin/change-availability', { docId }, { headers: { 
-                'Authorization': `Bearer ${aToken}`,
-                'Content-Type': 'multipart/form-data',  
-            } })
+            const { data } = await axios.post(`${backendUrl}/apis/admin/change-availability`, 
+                { docId }, 
+                { headers: { 'Authorization': `Bearer ${aToken}` } }
+            );
             if (data.success) {
-                toast.success(data.message)
-                getAllDoctors()
+                toast.success(data.message);
+                getAllDoctors();
             } else {
-                toast.error(data.message)
+                toast.error(data.message);
             }
-
         } catch (error) {
-            console.log(error)
-            toast.error(error.message)
+            toast.error(error.message);
         }
-    }
+    };
 
+      //update doctor
+    const updateDoctor = async (docId, updatedDetails) => {
+        try {
+            const { data } = await axios.put(`${backendUrl}/apis/admin/update-doctor/${docId}`, updatedDetails, {
+                headers: { 'Authorization': `Bearer ${aToken}` }
+            });
+    
+            if (data.success) {
+                toast.success(data.message);
+                getAllDoctors(); // Refresh the list after update
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message);
+        }
+    };
+    
 
-    // Getting all appointment data from Database using API
+    // Delete Doctor
+    const deleteDoctor = async (docId) => {
+        try {
+            const { data } = await axios.delete(`${backendUrl}/apis/admin/delete-doctor/${docId}`, {
+                headers: { 'Authorization': `Bearer ${aToken}` }
+            });
+            if (data.success) {
+                toast.success(data.message);
+                getAllDoctors();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
+    
+
+    // Get All Appointments
     const getAllAppointments = async () => {
-
         try {
-
-            const { data } = await axios.get(backendUrl + '/api/admin/appointments', { headers: { 
-                'Authorization': `Bearer ${aToken}`,
-                'Content-Type': 'multipart/form-data',  
-            } })
+            const { data } = await axios.get(`${backendUrl}/apis/admin/appointments`, {
+                headers: { 'Authorization': `Bearer ${aToken}` }
+            });
             if (data.success) {
-                setAppointments(data.appointments.reverse())
+                setAppointments(data.appointments.reverse());
             } else {
-                toast.error(data.message)
+                toast.error(data.message);
             }
-
         } catch (error) {
-            toast.error(error.message)
-            console.log(error)
+            toast.error(error.message);
         }
+    };
 
-    }
-
-    // Function to cancel appointment using API
+    // Cancel Appointment
     const cancelAppointment = async (appointmentId) => {
-
         try {
-
-            const { data } = await axios.post(backendUrl + '/api/admin/cancel-appointment', { appointmentId }, { headers: { 
-                'Authorization': `Bearer ${aToken}`,
-                'Content-Type': 'multipart/form-data',  
-            }  })
-
+            const { data } = await axios.post(`${backendUrl}/apis/admin/cancel-appointment`, 
+                { appointmentId }, 
+                { headers: { 'Authorization': `Bearer ${aToken}` } }
+            );
             if (data.success) {
-                toast.success(data.message)
-                getAllAppointments()
+                toast.success(data.message);
+                getAllAppointments();
             } else {
-                toast.error(data.message)
+                toast.error(data.message);
             }
-
         } catch (error) {
-            toast.error(error.message)
-            console.log(error)
+            toast.error(error.message);
         }
+    };
 
-    }
-
-    // Getting Admin Dashboard data from Database using API
+    // Get Dashboard Data
     const getDashData = async () => {
         try {
-
-            const { data } = await axios.get(backendUrl + '/api/admin/dashboard', {headers: { 
-                'Authorization': `Bearer ${aToken}`,
-                'Content-Type': 'multipart/form-data',  
-            } } )
-
+            const { data } = await axios.get(`${backendUrl}/apis/admin/dashboard`, {
+                headers: { 'Authorization': `Bearer ${aToken}` }
+            });
             if (data.success) {
-                setDashData(data.dashData)
+                setDashData(data.dashData);
             } else {
-                toast.error(data.message)
+                toast.error(data.message);
             }
-
         } catch (error) {
-            console.log(error)
-            toast.error(error.message)
+            toast.error(error.message);
         }
+    };
 
-    }
-
+    // Providing everything via context
     const value = {
         aToken, setAToken,
-        doctors,
-        getAllDoctors,
+        doctors, getAllDoctors,
         changeAvailability,
-        appointments,
-        getAllAppointments,
-        getDashData,
+        deleteDoctor,
+        updateDoctor,
+        appointments, getAllAppointments,
         cancelAppointment,
+        editingDoctor,
+        setEditingDoctor,
+        getDashData,
         dashData
-    }
+    };
+
+    
 
     return (
         <AdminContext.Provider value={value}>
             {props.children}
         </AdminContext.Provider>
-    )
+    );
+};
 
-}
-
-export default AdminContextProvider
+export default AdminContextProvider;

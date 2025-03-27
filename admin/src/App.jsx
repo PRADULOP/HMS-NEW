@@ -14,6 +14,12 @@ import Login from './pages/Login';
 import DoctorAppointments from './pages/Doctor/DoctorAppointments';
 import DoctorDashBoard from './pages/Doctor/DoctorDashBoard';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import DoctorChat from './pages/chat/DoctorChat';
+import ChatWindow from './pages/chat/ChatWindow';
+import UpdateDoctor from './pages/Admin/UpdateDoctor';
+
+
 
 const App = () => {
 
@@ -35,6 +41,14 @@ const App = () => {
           <Route path='/doctor-dashboard' element={<DoctorDashBoard />} />
           <Route path='/doctor-appointments' element={<DoctorAppointments />} />
           <Route path='/doctor-profile' element={<DoctorProfile />} />
+          <Route path="/admin-analytical" element={<AdminDashboard/>} />
+          <Route path="/admin/doctor/:id" element={<DoctorProfile />} />
+          <Route path="/chat" element={<DoctorChat />} />
+          <Route path="/chat-window" element={<ChatWindow />} />
+          <Route path="/update/:id" element={<UpdateDoctor />} />
+          
+
+
         </Routes>
       </div>
     </div>

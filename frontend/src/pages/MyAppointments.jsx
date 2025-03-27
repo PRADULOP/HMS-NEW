@@ -9,6 +9,10 @@ const MyAppointments = () => {
     const { backendUrl, token } = useContext(AppContext)
     const navigate = useNavigate()
 
+    const handleChatNavigation = () =>{
+        navigate('/chat/patientDashboard');
+    }
+
     const [appointments, setAppointments] = useState([])
     const [payment, setPayment] = useState('')
     const [selectedFilter, setSelectedFilter] = useState('all')
@@ -24,7 +28,7 @@ const MyAppointments = () => {
     // Getting User Appointments Data Using API
     const getUserAppointments = async () => {
         try {
-            const { data } = await axios.get(backendUrl + '/api/user/appointments', { headers: { token } })
+            const { data } = await axios.get(backendUrl + '/apis/user/appointments', { headers: { token } })
             setAppointments(data.appointments.reverse())
         } catch (error) {
             console.log(error)
@@ -35,7 +39,7 @@ const MyAppointments = () => {
     // Function to cancel appointment Using API
     const cancelAppointment = async (appointmentId) => {
         try {
-            const { data } = await axios.post(backendUrl + '/api/user/cancel-appointment', { appointmentId }, { headers: { token } })
+            const { data } = await axios.post(backendUrl + '/apis/user/cancel-appointment', { appointmentId }, { headers: { token } })
 
             if (data.success) {
                 toast.success(data.message)
@@ -61,7 +65,7 @@ const MyAppointments = () => {
             handler: async (response) => {
                 console.log(response)
                 try {
-                    const { data } = await axios.post(backendUrl + "/api/user/verifyRazorpay", response, { headers: { token } });
+                    const { data } = await axios.post(backendUrl + "/apis/user/verifyRazorpay", response, { headers: { token } });
                     if (data.success) {
                         navigate('/my-appointments')
                         getUserAppointments()
@@ -79,7 +83,7 @@ const MyAppointments = () => {
     // Function to make payment using razorpay
     const appointmentRazorpay = async (appointmentId) => {
         try {
-            const { data } = await axios.post(backendUrl + '/api/user/payment-razorpay', { appointmentId }, { headers: { token } })
+            const { data } = await axios.post(backendUrl + '/apis/user/payment-razorpay', { appointmentId }, { headers: { token } })
             if (data.success) {
                 initPay(data.order)
             } else {
@@ -91,21 +95,7 @@ const MyAppointments = () => {
         }
     }
 
-    // Function to make payment using stripe
-    const appointmentStripe = async (appointmentId) => {
-        try {
-            const { data } = await axios.post(backendUrl + '/api/user/payment-stripe', { appointmentId }, { headers: { token } })
-            if (data.success) {
-                const { session_url } = data
-                window.location.replace(session_url)
-            } else {
-                toast.error(data.message)
-            }
-        } catch (error) {
-            console.log(error)
-            toast.error(error.message)
-        }
-    }
+
 
     // Filter appointments
     const filteredAppointments = appointments.filter(appointment => {
@@ -177,9 +167,7 @@ const MyAppointments = () => {
                                     )}
                                     {!appointment.cancelled && !appointment.isCompleted && (
                                         <div className="absolute top-0 right-0 m-4">
-                                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                                Upcoming
-                                            </span>
+                                            
                                         </div>
                                     )}
                                     
@@ -259,12 +247,7 @@ const MyAppointments = () => {
                                             
                                             {!appointment.cancelled && !appointment.payment && !appointment.isCompleted && payment === appointment._id && (
                                                 <>
-                                                    <button 
-                                                        onClick={() => appointmentStripe(appointment._id)} 
-                                                        className="w-full px-4 py-2.5 bg-white text-slate-800 font-medium rounded-lg hover:bg-slate-100 transition-all border border-slate-200 shadow-sm flex items-center justify-center"
-                                                    >
-                                                        <img className="h-6" src={assets.stripe_logo} alt="Stripe" />
-                                                    </button>
+                                                    
                                                     
                                                     <button 
                                                         onClick={() => appointmentRazorpay(appointment._id)} 
@@ -294,12 +277,26 @@ const MyAppointments = () => {
                                                     </svg>
                                                     Cancel Appointment
                                                 </button>
+                                                
                                             )}
+                                            {!appointment.cancelled && (
+    <button 
+        onClick= {handleChatNavigation}
+        className="w-full px-4 py-2.5 bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium rounded-lg hover:from-green-600 hover:to-teal-600 transition-all shadow-sm hover:shadow flex items-center justify-center"
+    >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m-3 3a9 9 0 100-18 9 9 0 000 18z" />
+        </svg>
+        Chat Now
+    </button>
+)}
+
                                         </div>
                                     </div>
                                 </div>
                             ))
                         )}
+                         
                     </div>
                 </div>
             </div>
@@ -309,165 +306,3 @@ const MyAppointments = () => {
 
 export default MyAppointments
 
-// import React, { useContext, useEffect, useState } from 'react'
-// import { useNavigate } from 'react-router-dom'
-// import { AppContext } from '../context/AppContext'
-// import axios from 'axios'
-// import { toast } from 'react-toastify'
-// import { assets } from '../assets/assets'
-
-// const MyAppointments = () => {
-
-//     const { backendUrl, token } = useContext(AppContext)
-//     const navigate = useNavigate()
-
-//     const [appointments, setAppointments] = useState([])
-//     const [payment, setPayment] = useState('')
-
-//     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-//     // Function to format the date eg. ( 20_01_2000 => 20 Jan 2000 )
-//     const slotDateFormat = (slotDate) => {
-//         const dateArray = slotDate.split('_')
-//         return dateArray[0] + " " + months[Number(dateArray[1])] + " " + dateArray[2]
-//     }
-
-//     // Getting User Appointments Data Using API
-//     const getUserAppointments = async () => {
-//         try {
-
-//             const { data } = await axios.get(backendUrl + '/api/user/appointments', { headers: { token } })
-//             setAppointments(data.appointments.reverse())
-
-//         } catch (error) {
-//             console.log(error)
-//             toast.error(error.message)
-//         }
-//     }
-
-//     // Function to cancel appointment Using API
-//     const cancelAppointment = async (appointmentId) => {
-
-//         try {
-
-//             const { data } = await axios.post(backendUrl + '/api/user/cancel-appointment', { appointmentId }, { headers: { token } })
-
-//             if (data.success) {
-//                 toast.success(data.message)
-//                 getUserAppointments()
-//             } else {
-//                 toast.error(data.message)
-//             }
-
-//         } catch (error) {
-//             console.log(error)
-//             toast.error(error.message)
-//         }
-
-//     }
-
-//     const initPay = (order) => {
-//         const options = {
-//             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-//             amount: order.amount,
-//             currency: order.currency,
-//             name: 'Appointment Payment',
-//             description: "Appointment Payment",
-//             order_id: order.id,
-//             receipt: order.receipt,
-//             handler: async (response) => {
-
-//                 console.log(response)
-
-//                 try {
-//                     const { data } = await axios.post(backendUrl + "/api/user/verifyRazorpay", response, { headers: { token } });
-//                     if (data.success) {
-//                         navigate('/my-appointments')
-//                         getUserAppointments()
-//                     }
-//                 } catch (error) {
-//                     console.log(error)
-//                     toast.error(error.message)
-//                 }
-//             }
-//         };
-//         const rzp = new window.Razorpay(options);
-//         rzp.open();
-//     };
-
-//     // Function to make payment using razorpay
-//     const appointmentRazorpay = async (appointmentId) => {
-//         try {
-//             const { data } = await axios.post(backendUrl + '/api/user/payment-razorpay', { appointmentId }, { headers: { token } })
-//             if (data.success) {
-//                 initPay(data.order)
-//             }else{
-//                 toast.error(data.message)
-//             }
-//         } catch (error) {
-//             console.log(error)
-//             toast.error(error.message)
-//         }
-//     }
-
-//     // Function to make payment using stripe
-//     const appointmentStripe = async (appointmentId) => {
-//         try {
-//             const { data } = await axios.post(backendUrl + '/api/user/payment-stripe', { appointmentId }, { headers: { token } })
-//             if (data.success) {
-//                 const { session_url } = data
-//                 window.location.replace(session_url)
-//             }else{
-//                 toast.error(data.message)
-//             }
-//         } catch (error) {
-//             console.log(error)
-//             toast.error(error.message)
-//         }
-//     }
-
-
-
-//     useEffect(() => {
-//         if (token) {
-//             getUserAppointments()
-//         }
-//     }, [token])
-
-//     return (
-//         <div>
-//             <p className='pb-3 mt-28 text-lg font-medium text-gray-600 border-b'>My appointments</p>
-//             <div className=''>
-//                 {appointments.map((item, index) => (
-//                     <div key={index} className='grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-4 border-b'>
-//                         <div>
-//                             <img className='w-36 bg-[#EAEFFF]' src={item.docData.image} alt="" />
-//                         </div>
-//                         <div className='flex-1 text-sm text-[#5E5E5E]'>
-//                             <p className='text-[#262626] text-base font-semibold'>{item.docData.name}</p>
-//                             <p>{item.docData.speciality}</p>
-//                             <p className='text-[#464646] font-medium mt-1'>Address:</p>
-//                             <p className=''>{item.docData.address.line1}</p>
-//                             <p className=''>{item.docData.address.line2}</p>
-//                             <p className=' mt-1'><span className='text-sm text-[#3C3C3C] font-medium'>Date & Time:</span> {slotDateFormat(item.slotDate)} |  {item.slotTime}</p>
-//                         </div>
-//                         <div></div>
-//                         <div className='flex flex-col gap-2 justify-end text-sm text-center'>
-//                             {!item.cancelled && !item.payment && !item.isCompleted && payment !== item._id && <button onClick={() => setPayment(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-cyan-500 hover:text-white transition-all duration-300'>Pay Online</button>}
-//                             {!item.cancelled && !item.payment && !item.isCompleted && payment === item._id && <button onClick={() => appointmentStripe(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 hover:text-white transition-all duration-300 flex items-center justify-center'><img className='max-w-20 max-h-5' src={assets.stripe_logo} alt="" /></button>}
-//                             {!item.cancelled && !item.payment && !item.isCompleted && payment === item._id && <button onClick={() => appointmentRazorpay(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-gray-100 hover:text-white transition-all duration-300 flex items-center justify-center'><img className='max-w-20 max-h-5' src={assets.razorpay_logo} alt="" /></button>}
-//                             {!item.cancelled && item.payment && !item.isCompleted && <button className='sm:min-w-48 py-2 border rounded text-[#696969]  bg-[#EAEFFF]'>Paid</button>}
-
-//                             {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Completed</button>}
-
-//                             {!item.cancelled && !item.isCompleted && <button onClick={() => cancelAppointment(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300'>Cancel appointment</button>}
-//                             {item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-red-500 rounded text-red-500'>Appointment cancelled</button>}
-//                         </div>
-//                     </div>
-//                 ))}
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default MyAppointments

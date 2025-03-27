@@ -18,7 +18,7 @@ const DoctorContextProvider = (props) => {
     const getAppointments = async () => {
         try {
 
-            const { data } = await axios.get(backendUrl + '/api/doctor/appointments', { headers: { dToken } })
+            const { data } = await axios.get(backendUrl + '/apis/doctor/appointments', { headers: { dToken } })
 
             if (data.success) {
                 setAppointments(data.appointments.reverse())
@@ -36,7 +36,7 @@ const DoctorContextProvider = (props) => {
     const getProfileData = async () => {
         try {
 
-            const { data } = await axios.get(backendUrl + '/api/doctor/profile', { headers: { dToken } })
+            const { data } = await axios.get(backendUrl + '/apis/doctor/profile', { headers: { dToken } })
             console.log(data.profileData)
             setProfileData(data.profileData)
 
@@ -51,7 +51,7 @@ const DoctorContextProvider = (props) => {
 
         try {
 
-            const { data } = await axios.post(backendUrl + '/api/doctor/cancel-appointment', { appointmentId }, { headers: { dToken } })
+            const { data } = await axios.post(backendUrl + '/apis/doctor/cancel-appointment', { appointmentId }, { headers: { dToken } })
 
             if (data.success) {
                 toast.success(data.message)
@@ -74,7 +74,7 @@ const DoctorContextProvider = (props) => {
 
         try {
 
-            const { data } = await axios.post(backendUrl + '/api/doctor/complete-appointment', { appointmentId }, { headers: { dToken } })
+            const { data } = await axios.post(backendUrl + '/apis/doctor/complete-appointment', { appointmentId }, { headers: { dToken } })
 
             if (data.success) {
                 toast.success(data.message)
@@ -96,7 +96,7 @@ const DoctorContextProvider = (props) => {
     const getDashData = async () => {
         try {
 
-            const { data } = await axios.get(backendUrl + '/api/doctor/dashboard', { headers: { dToken } })
+            const { data } = await axios.get(backendUrl + '/apis/doctor/dashboard', { headers: { dToken } })
 
             if (data.success) {
                 setDashData(data.dashData)
